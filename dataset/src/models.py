@@ -35,7 +35,7 @@ models = {
         {"model__var_smoothing": [1e-9, 1e-7, 1e-5, 1e-3]}),
     "Nearest neighbour": (
         Pipeline([fill, ("scale", StandardScaler()), ("model", KNeighborsClassifier())]),
-        {"model__n_neighbors": [3, 5, 11, 21, 41]}),
+        {"model__n_neighbors": [3, 5, 7, 11, 15, 21], "model__weights": ["distance", "uniform"]}),
 }
 
 # 4. Choose the settings by grid search, scored by f1_macro,

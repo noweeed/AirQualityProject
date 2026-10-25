@@ -4,16 +4,16 @@
 
 | part | from | to | rows |
 |---|---|---|---|
-| Train | 2004-03-10 | 2005-01-26 | 6464 |
-| Test | 2005-01-27 | 2005-04-03 | 1592 |
+| Train | 2004-03-10 | 2005-01-27 | 6153 |
+| Test | 2005-01-28 | 2005-04-03 | 1515 |
 
 
 ## Baseline (always guess the biggest group)
 
 | part | baseline_% |
 |---|---|
-| Train | 50.1 |
-| Test | 63.1 |
+| Train | 49.4 |
+| Test | 63.4 |
 
 
 ## Rescaling decision per model
@@ -29,9 +29,9 @@
 
 | method | accuracy | accuracy_spread | f1_macro | f1_spread |
 |---|---|---|---|---|
-| All columns | 0.69 | 0.039 | 0.482 | 0.031 |
-| Feature Selection | 0.7 | 0.057 | 0.471 | 0.035 |
-| PCA | 0.672 | 0.048 | 0.436 | 0.024 |
+| All columns | 0.673 | 0.045 | 0.451 | 0.022 |
+| Feature Selection | 0.691 | 0.05 | 0.457 | 0.024 |
+| PCA | 0.671 | 0.049 | 0.439 | 0.028 |
 
 
 ## Best 6 columns (feature selection)

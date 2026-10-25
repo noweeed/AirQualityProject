@@ -143,6 +143,8 @@ md.append("Binning is not needed for these models. Decision tree, Gaussian naive
           "nearest neighbour all take numeric columns directly. Only the target was binned "
           "(tomorrow's NO2 into Good / Moderate / Poor).\n")
 
+with open("docs/preprocessing_results.md", "w", encoding="utf-8") as fh:
+    fh.write("\n".join(md))
 with open("docs/part_c_results.md", "w", encoding="utf-8") as fh:
     fh.write("\n".join(md))
 

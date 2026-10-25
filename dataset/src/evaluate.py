@@ -40,21 +40,24 @@ baseline = round(base_test.max() * 100, 1)
 print(f"Test baseline: always guess {base_test.idxmax()} = {baseline}%")
 print(f"Share of Poor hours: train {base_train.get('Poor', 0)*100:.1f}%, test {base_test.get('Poor', 0)*100:.1f}%")
 
-# 3. Test results: accuracy + 3 extra metrics, baseline beside every accuracy
+# 3. Test results: accuracy + extra metrics, baselines, and multiclass AUC
 rows, probs = [], {}
 is_poor = (y_test == "Poor").values
 for name, m in models.items():
     pred = m.predict(X_test)
     poor_idx = list(m.classes_).index("Poor")
     probs[name] = m.predict_proba(X_test)[:, poor_idx]
+    all_probs = m.predict_proba(X_test)
     rows.append({
         "model": name,
-        "baseline_%": baseline,
+        "train_baseline_%": round(base_train.max() * 100, 1),
+        "test_baseline_%": baseline,
         "accuracy_%": round(accuracy_score(y_test, pred) * 100, 1),
         "f1_macro": round(f1_score(y_test, pred, average="macro"), 3),
         "poor_recall": round(recall_score(y_test, pred, labels=["Poor"], average=None, zero_division=0)[0], 3),
         "poor_precision": round(precision_score(y_test, pred, labels=["Poor"], average=None, zero_division=0)[0], 3),
         "auc_poor": round(roc_auc_score(is_poor, probs[name]), 3),
+        "multiclass_auc_macro": round(roc_auc_score(y_test, all_probs, multi_class="ovr", average="macro", labels=CLASSES), 3),
     })
 perf = pd.DataFrame(rows)
 print("\n=== TEST RESULTS ===")

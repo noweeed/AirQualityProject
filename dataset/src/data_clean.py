@@ -22,17 +22,27 @@ raw = df.copy()
 # 4. Replace -200 with missing values
 df = df.replace(-200, float("nan"))
 
-# 5. Fill gaps of up to 3 hours and track changes
+# 5. Fill short gaps (1 to 3 hours) using past observations only (no future look-ahead).
+# Target column NO2(GT) is NEVER interpolated.
 table = []
 
 for c in list(df.columns):
     was_missing = df[c].isna()
 
-    df[c] = df[c].interpolate(
-        method="time",
-        limit=3,
-        limit_area="inside"
-    )
+    if c == "NO2(GT)":
+        # Target variable NO2(GT) is strictly NEVER interpolated to prevent target leakage
+        pass
+    else:
+        # Identify contiguous missing blocks and their lengths
+        is_na = df[c].isna()
+        blocks = (~is_na).cumsum()
+        gap_sizes = is_na.groupby(blocks).transform("sum")
+        # Only repair short gaps of 1 to 3 hours; leave longer outages alone
+        short_gaps = is_na & (gap_sizes <= 3)
+
+        # Causal forward-fill carries last valid reading forward without looking into the future
+        ffilled = df[c].ffill(limit=3)
+        df.loc[short_gaps, c] = ffilled.loc[short_gaps]
 
     # Track whether each value was original, filled, or left empty
     src = pd.Series("original", index=df.index)

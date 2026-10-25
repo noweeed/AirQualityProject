@@ -3,18 +3,18 @@
 ## Split
 By time: older 80% = train, newest 20% = test, with a 24-row gap (each answer looks 24 hours ahead).
 
-## 1. Test results (baseline: always guess Moderate = 63.1%)
+## 1. Test results (baseline: always guess Moderate = 63.4%)
 
-| model | baseline_% | accuracy_% | f1_macro | poor_recall | poor_precision | auc_poor |
-|---|---|---|---|---|---|---|
-| Decision tree | 63.1 | 68.1 | 0.497 | 0.096 | 0.535 | 0.717 |
-| Naive Bayes | 63.1 | 54.8 | 0.507 | 0.317 | 0.517 | 0.792 |
-| Nearest neighbour | 63.1 | 67.8 | 0.456 | 0.0 | 0.0 | 0.776 |
+| model | train_baseline_% | test_baseline_% | accuracy_% | f1_macro | poor_recall | poor_precision | auc_poor | multiclass_auc_macro |
+|---|---|---|---|---|---|---|---|---|
+| Decision tree | 49.4 | 63.4 | 69.4 | 0.509 | 0.134 | 0.696 | 0.792 | 0.755 |
+| Naive Bayes | 49.4 | 63.4 | 54.9 | 0.508 | 0.319 | 0.521 | 0.793 | 0.76 |
+| Nearest neighbour | 49.4 | 63.4 | 66.7 | 0.448 | 0.013 | 0.188 | 0.721 | 0.718 |
 
 ## 2. Why these metrics suit this user
 - **Poor recall:** the user is a parent, school or outdoor worker. A Poor day with no warning is the worst mistake. Recall is the share of real Poor hours the model caught.
 - **Poor precision:** if the model warns all the time, recall looks great but nobody trusts the warnings. Precision is the share of warnings that were right.
-- **Macro F1:** Poor is just 15.1% of test hours, so accuracy can look fine while Poor is ignored. Macro F1 counts Good, Moderate and Poor equally.
+- **Macro F1:** Poor is just 15.7% of test hours, so accuracy can look fine while Poor is ignored. Macro F1 counts Good, Moderate and Poor equally.
 
 ## 3. ROC curve and AUC (Poor vs the rest)
 
@@ -26,33 +26,33 @@ By time: older 80% = train, newest 20% = test, with a 24-row gap (each answer lo
 
 | Actual | Pred Good | Pred Moderate | Pred Poor |
 |---|---|---|---|
-| Good | 167 | 180 | 1 |
-| Moderate | 91 | 894 | 19 |
-| Poor | 1 | 216 | 23 |
+| Good | 127 | 188 | 1 |
+| Moderate | 56 | 892 | 13 |
+| Poor | 2 | 204 | 32 |
 
 ### Naive Bayes
 
 | Actual | Pred Good | Pred Moderate | Pred Poor |
 |---|---|---|---|
-| Good | 301 | 44 | 3 |
-| Moderate | 440 | 496 | 68 |
-| Poor | 34 | 130 | 76 |
+| Good | 275 | 38 | 3 |
+| Moderate | 414 | 480 | 67 |
+| Poor | 33 | 129 | 76 |
 
 ### Nearest neighbour
 
 | Actual | Pred Good | Pred Moderate | Pred Poor |
 |---|---|---|---|
-| Good | 204 | 144 | 0 |
-| Moderate | 129 | 875 | 0 |
-| Poor | 8 | 232 | 0 |
+| Good | 155 | 161 | 0 |
+| Moderate | 95 | 853 | 13 |
+| Poor | 0 | 235 | 3 |
 
 ## 5. Cross-validation on the train pile (5 folds, time order, mean +/- spread)
 
 | model | accuracy_% | f1_macro |
 |---|---|---|
-| Decision tree | 69.2 +/- 2.8 | 0.493 +/- 0.035 |
-| Naive Bayes | 63.2 +/- 8.6 | 0.479 +/- 0.035 |
-| Nearest neighbour | 72.2 +/- 2.8 | 0.478 +/- 0.016 |
+| Decision tree | 71.5 +/- 3.7 | 0.484 +/- 0.033 |
+| Naive Bayes | 62.0 +/- 8.4 | 0.472 +/- 0.037 |
+| Nearest neighbour | 71.1 +/- 3.0 | 0.475 +/- 0.015 |
 
 ## 6. Cost matrix and operating threshold
 
@@ -67,6 +67,6 @@ The costs are our own choice: a missed Poor day is worse than a false alarm. The
 
 | model | chosen_threshold | missed_at_0.5 | alarms_at_0.5 | cost_at_0.5 | missed_at_chosen | alarms_at_chosen | cost_at_chosen |
 |---|---|---|---|---|---|---|---|
-| Decision tree | 0.5 | 217 | 21 | 1106 | 217 | 21 | 1106 |
-| Naive Bayes | 0.5 | 164 | 71 | 891 | 164 | 71 | 891 |
-| Nearest neighbour | 0.3 | 240 | 0 | 1200 | 225 | 28 | 1153 |
+| Decision tree | 0.05 | 206 | 14 | 1044 | 24 | 683 | 803 |
+| Naive Bayes | 0.5 | 162 | 70 | 880 | 162 | 70 | 880 |
+| Nearest neighbour | 0.3 | 236 | 4 | 1184 | 215 | 57 | 1132 |
