@@ -42,4 +42,4 @@ The user asks at hour t. Only readings from hour t and earlier are known at that
 3. **Anything built from future hours:** for example, a daily average that includes hours after t. Only averages that look backwards are allowed.
 4. **The *_src columns:** they describe how we cleaned the data, which the user would not have.
 
-NMHC(GT) is also excluded, for a different reason: it is about 90% missing and cannot be repaired.
+NMHC(GT) is also excluded, it is about 90% missing and cannot be repaired.

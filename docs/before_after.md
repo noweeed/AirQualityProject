@@ -1,5 +1,9 @@
-# Before and after repair
-
+# Before and After Data Repair
+ 
+This table demonstrates the quantitative effect of repairing -200 sentinels and applying causal forward-fill for brief outages.
+ 
+## Numeric Comparison
+ 
 | column | mean_with_-200 | mean_after_repair | filled | still_missing |
 |---|---|---|---|---|
 | CO(GT) | -34.21 | 2.13 | 166 | 1517 |
@@ -14,3 +18,12 @@
 | T | 9.78 | 18.32 | 6 | 360 |
 | RH | 39.48 | 49.23 | 6 | 360 |
 | AH | -6.84 | 1.03 | 6 | 360 |
+ 
+## Column Details and Key Observations
+ 
+- **`mean_with_-200`:** Shows how -200 sentinels heavily dragged down physical averages. For instance, `CO(GT)` had an impossible raw mean of -34.21 mg/m³ and `AH` (absolute humidity) was -6.84.
+- **`mean_after_repair`:** True physical mean after converting -200 to NaN and forward-filling short gaps (`CO(GT)` corrected to +2.13 mg/m³, `AH` corrected to +1.03).
+- **`filled`:** Total hourly gaps of 1 to 3 hours repaired using causal forward-fill (e.g. 166 readings in `CO(GT)`, 325 in `NOx(GT)`). Note that `NO2(GT)` has 0 filled because target source values are never interpolated.
+- **`still_missing`:** Outages longer than 3 hours left alone during cleaning to prevent inventing fake weather. These are handled as neutral medians during model training.
+- **Provenance Tracking:** In `airquality_clean.csv`, every sensor column has a companion `*_src` column recording whether each cell is `original`, `interpolated`, or `unrepaired`.
+

@@ -182,16 +182,70 @@ st.sidebar.markdown(
 # =============================================================
 if selected_screen == "1. Data & Quality Audit":
     st.header("Screen 1: Data & Data Quality Audit")
+    st.write(
+        "Explore the foundational data documentation, raw sensor flaw audit, "
+        "reproducible cleaning steps, and our 12-check validation test suite."
+    )
 
-    tab1, tab2, tab3 = st.tabs(["1. What Was Wrong (Fault Audit)", "2. How We Fixed It (Before & After)", "3. Clean Dataset"])
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "1. Data Dictionary",
+        "2. Quality Audit & Repairs",
+        "3. Validation Suite (12 Assertions)",
+        "4. Clean Dataset & Download"
+    ])
 
     with tab1:
+        st.subheader("Data Dictionary")
+        st.write(
+            "Every attribute in our dataset has been audited for measurement type, plausible physical limits, "
+            "and operational role. The study spans 9,357 hourly records across 15 attributes."
+        )
+
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Total Records", f"{len(clean_df):,}")
+        col2.metric("Raw Attributes", "15 Columns")
+        col3.metric("Measurement Types", "4 Present")
+        col4.metric("Forecast Horizon", "24 Hours Ahead")
+
+        st.markdown("---")
+        
+        # Load data dictionary table excluding 'Why this range'
+        dict_rows = [
+            {"Column": "Date", "What it is": "Calendar date", "Type": "Interval", "Plausible range": "Mar 2004 to Apr 2005", "Role": "Identifier"},
+            {"Column": "Time", "What it is": "Hour of the day", "Type": "Interval", "Plausible range": "0 to 23", "Role": "Identifier"},
+            {"Column": "CO(GT)", "What it is": "Carbon monoxide, lab analyser", "Type": "Ratio", "Plausible range": "0 to 15", "Role": "Explanatory"},
+            {"Column": "PT08.S1(CO)", "What it is": "Cheap CO sensor", "Type": "Ratio", "Plausible range": "0 to 2500", "Role": "Explanatory"},
+            {"Column": "NMHC(GT)", "What it is": "Hydrocarbons, lab analyser", "Type": "Ratio", "Plausible range": "0 to 1500", "Role": "Must not be used (about 90% missing)"},
+            {"Column": "C6H6(GT)", "What it is": "Benzene", "Type": "Ratio", "Plausible range": "0 to 100", "Role": "Explanatory"},
+            {"Column": "PT08.S2(NMHC)", "What it is": "Cheap hydrocarbon sensor", "Type": "Ratio", "Plausible range": "0 to 2500", "Role": "Explanatory"},
+            {"Column": "NOx(GT)", "What it is": "Nitrogen oxides, lab analyser", "Type": "Ratio", "Plausible range": "0 to 1500", "Role": "Explanatory"},
+            {"Column": "PT08.S3(NOx)", "What it is": "Cheap NOx sensor", "Type": "Ratio", "Plausible range": "0 to 3000", "Role": "Explanatory"},
+            {"Column": "NO2(GT)", "What it is": "Nitrogen dioxide, lab analyser", "Type": "Ratio", "Plausible range": "0 to 400", "Role": "Explanatory (current hour) and source of target"},
+            {"Column": "PT08.S4(NO2)", "What it is": "Cheap NO2 sensor", "Type": "Ratio", "Plausible range": "0 to 3000", "Role": "Explanatory"},
+            {"Column": "PT08.S5(O3)", "What it is": "Cheap ozone sensor", "Type": "Ratio", "Plausible range": "0 to 3000", "Role": "Explanatory"},
+            {"Column": "T", "What it is": "Temperature in °C", "Type": "Interval", "Plausible range": "-10 to 50", "Role": "Explanatory"},
+            {"Column": "RH", "What it is": "Relative humidity in %", "Type": "Ratio", "Plausible range": "0 to 100", "Role": "Explanatory"},
+            {"Column": "AH", "What it is": "Absolute humidity", "Type": "Ratio", "Plausible range": "0 to 5", "Role": "Explanatory"},
+            {"Column": "hour (created)", "What it is": "Hour from Time", "Type": "Ordinal", "Plausible range": "0 to 23", "Role": "Explanatory"},
+            {"Column": "day_of_week (created)", "What it is": "Monday to Sunday", "Type": "Nominal", "Plausible range": "7 values", "Role": "Explanatory"},
+            {"Column": "season (created)", "What it is": "Winter, spring, summer, autumn", "Type": "Nominal", "Plausible range": "4 values", "Role": "Explanatory"},
+            {"Column": "target (created)", "What it is": "Air quality category 24 hours ahead", "Type": "Ordinal", "Plausible range": "Good < Moderate < Poor", "Role": "Target"},
+            {"Column": "*_src (created in cleaning)", "What it is": "How each value was repaired", "Type": "Nominal", "Plausible range": "original / interpolated / unrepaired", "Role": "Must not be used as a feature"}
+        ]
+        st.table(pd.DataFrame(dict_rows))
+
+    with tab2:
         st.subheader("Sensor Faults Found in the Raw Data")
         st.write(
-            "Sensors in the real world break, lose power, or lose signal. "
-            "In this dataset, whenever a sensor failed, it recorded -200 instead of leaving an empty cell. "
-            "Because -200 looks like a normal negative number, computers do not know it is missing and treat it as real data. "
-            "Here are the checks we ran and how many rows were affected:"
+            "Air quality monitoring stations operate continuously outdoors. In real environments, chemical sensors "
+            "suffer from power outages, sensor drift, telecommunication dropouts, and extreme weather interference. "
+            "In this dataset, whenever a sensor failed or went offline, it recorded -200 instead of leaving an empty cell. "
+            "Because -200 is treated by computers as a valid negative number, it completely corrupts averages, distances, and distributions."
+        )
+
+        st.markdown("#### 1. Eight-Point Quality Audit")
+        st.write(
+            "We audited the raw dataset for eight distinct data quality problems:"
         )
         if os.path.exists("docs/audit_report.md"):
             with open("docs/audit_report.md", "r", encoding="utf-8") as f:
@@ -199,18 +253,21 @@ if selected_screen == "1. Data & Quality Audit":
         else:
             st.warning("docs/audit_report.md not found.")
 
-    with tab2:
-        st.subheader("Our Cleaning and Repair Process")
+        st.markdown("---")
+        st.markdown("#### 2. Cleaning and Repair Strategy")
         st.write(
-            "Here is the step-by-step repair process we carried out:\n"
-            "1. **Replaced -200 with NaN:** We converted every -200 into a real missing value so it no longer skews averages.\n"
-            "2. **Dropped NMHC(GT):** Over 90% of this column was missing. You cannot safely guess 90% of a column without making up fake data, so we dropped it completely.\n"
-            "3. **Repaired Short Gaps (1 to 3 hours):** If a sensor went silent for 1 to 3 hours, we filled it with linear time interpolation (drawing a straight line between the hour before and the hour after).\n"
-            "4. **Left Long Gaps Alone:** If a sensor died for days or weeks, we left it blank. Filling long gaps with straight lines would invent fake weather.\n"
-            "5. **Provenance Tracking:** We added a companion note column (`_src`) for every sensor recording whether each value was `original`, `interpolated`, or `unrepaired`."
+            "1. **Replaced -200 with Missing Values:** Changed -200 into missing values because it does not represent a real reading.\n"
+            "2. **Removed NMHC Column:** Removed NMHC because over 90% of its values were missing.\n"
+            "3. **Filled Short Gaps (1 to 3 Hours):** Used the last available reading to fill short gaps.\n"
+            "4. **Kept Long Gaps Missing:** Gaps longer than 3 hours were left missing instead of guessing values.\n"
+            "5. **Kept Actual NO2 Readings:** Never filled missing NO2 target values because the model must learn from real measurements.\n"
+            "6. **Added Data Source Labels:** Added `_src` columns to show whether values were original, filled, or still missing."
         )
 
-        st.write("**Before and After Numbers (Notice how -200 crushed the raw averages):**")
+        st.markdown("#### 3. Before and After Repair Impact")
+        st.write(
+            "Notice how the artificial -200 sentinels dragged raw averages into impossible negative numbers (e.g. CO mean was -34.21 mg/m³ in raw data, corrected to +2.13 mg/m³):"
+        )
         if os.path.exists("docs/before_after.md"):
             with open("docs/before_after.md", "r", encoding="utf-8") as f:
                 st.markdown(f.read())
@@ -218,11 +275,36 @@ if selected_screen == "1. Data & Quality Audit":
             st.warning("docs/before_after.md not found.")
 
     with tab3:
-        st.subheader("Clean Repaired Data")
+        st.subheader("Data Quality Validation Suite (12 Assertions)")
+        st.success("12/12 passed on clean data")
+
+        val_rows = [
+            {"Check #": "1", "Assertion Rule": "Zero -200 sentinels in readings", "Raw Data": "FAILED (2,120 rows)", "Clean Data": "PASSED (0 sentinels)"},
+            {"Check #": "2", "Assertion Rule": "Drop NMHC(GT) (>90% missing)", "Raw Data": "FAILED (Column present)", "Clean Data": "PASSED (Dropped)"},
+            {"Check #": "3", "Assertion Rule": "CO(GT) >= 0 mg/m³", "Raw Data": "FAILED (Min: -200.0)", "Clean Data": "PASSED (Min: 0.0)"},
+            {"Check #": "4", "Assertion Rule": "C6H6(GT) >= 0 µg/m³", "Raw Data": "FAILED (Min: -200.0)", "Clean Data": "PASSED (Min: 0.1)"},
+            {"Check #": "5", "Assertion Rule": "NOx(GT) >= 0 ppb", "Raw Data": "FAILED (Min: -200.0)", "Clean Data": "PASSED (Min: 2.0)"},
+            {"Check #": "6", "Assertion Rule": "NO2(GT) >= 0 µg/m³", "Raw Data": "FAILED (Min: -200.0)", "Clean Data": "PASSED (Min: 2.0)"},
+            {"Check #": "7", "Assertion Rule": "Cheap sensor resistance >= 0", "Raw Data": "FAILED (Min: -200.0)", "Clean Data": "PASSED (Min: 387.5)"},
+            {"Check #": "8", "Assertion Rule": "Relative humidity RH in [0%, 100%]", "Raw Data": "FAILED (Min: -200.0)", "Clean Data": "PASSED (9.2% to 88.7%)"},
+            {"Check #": "9", "Assertion Rule": "Temperature T in [-30°C, 50°C]", "Raw Data": "FAILED (Min: -200.0)", "Clean Data": "PASSED (-1.9°C to 44.6°C)"},
+            {"Check #": "10", "Assertion Rule": "Absolute humidity AH >= 0", "Raw Data": "FAILED (Min: -200.0)", "Clean Data": "PASSED (Min: 0.185)"},
+            {"Check #": "11", "Assertion Rule": "Zero duplicate timestamps", "Raw Data": "PASSED (0 duplicates)", "Clean Data": "PASSED (0 duplicates)"},
+            {"Check #": "12", "Assertion Rule": "Strict chronological time order", "Raw Data": "PASSED (Monotonic)", "Clean Data": "PASSED (Monotonic)"}
+        ]
+        st.table(pd.DataFrame(val_rows))
+
+    with tab4:
+        st.subheader("Clean Repaired Dataset")
         st.write(
-            f"The final dataset has **{len(clean_df):,} hourly records** running from March 2004 to April 2005. "
-            "It passed all 12 assertion checks in `validate.py` with zero -200 values remaining."
+            f"The verified dataset contains **{len(clean_df):,} hourly records** running from March 10, 2004 to April 4, 2005. "
+            "All sensors follow physically plausible ranges, and short outages have been causally repaired."
         )
+
+        st.markdown("#### Sample Preview (First 10 Records)")
+        st.dataframe(clean_df.head(10), use_container_width=True)
+
+        st.markdown("#### Export Clean Data")
         csv_data = clean_df.to_csv().encode("utf-8")
         st.download_button(
             label="Download Cleaned Dataset (CSV)",
