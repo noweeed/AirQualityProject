@@ -182,10 +182,6 @@ st.sidebar.markdown(
 # =============================================================
 if selected_screen == "1. Data & Quality Audit":
     st.header("Screen 1: Data & Data Quality Audit")
-    st.write(
-        "Before building any forecasting model, we audited the raw sensor readings to find flaws, "
-        "repaired the corrupted numbers, and proved the data meets strict quality standards."
-    )
 
     tab1, tab2, tab3 = st.tabs(["1. What Was Wrong (Fault Audit)", "2. How We Fixed It (Before & After)", "3. Clean Dataset"])
 
@@ -279,11 +275,7 @@ elif selected_screen == "2. Model Performance":
             })
         st.table(pd.DataFrame(perf_rows))
 
-        st.subheader("2. What -200 Did to the Models (The Assigned Challenge)")
-        st.write(
-            "The effect of -200 on the models was small and mixed: only naive Bayes showed a clear drop. "
-            "The large effect is on the data (CO mean -34.21 before repair, 2.12 after)."
-        )
+        st.subheader("2. Effect of -200 on Models")
         st.table(load_challenge_data())
 
     with col2:
@@ -308,7 +300,7 @@ elif selected_screen == "3. Single Prediction & Advisory":
     st.header("Screen 3: Single Case Air Quality Advisory")
     st.write(
         "Enter today's sensor readings to forecast tomorrow's air category, "
-        "receive tailored advice for your situation, and see the plain-English explanation."
+        "receive tailored advice for your situation, and see the explanation."
     )
 
     chosen_model_name = st.session_state.get("selected_model_name", DEFAULT_MODEL)
@@ -340,7 +332,7 @@ elif selected_screen == "3. Single Prediction & Advisory":
     )
     preset = PRESETS[scenario]
 
-    st.subheader("Today's Sensor Readings (Validation: Non-negative values only)")
+    st.subheader("Enter Sensor Readings")
     col1, col2, col3 = st.columns(3)
 
     # Scoped keys ensure switching presets immediately updates widget values
@@ -417,7 +409,7 @@ elif selected_screen == "3. Single Prediction & Advisory":
         st.info(advisories[final_pred][user_role])
 
         # Explanation section customized for each model family
-        st.subheader("Why the model made this forecast (Plain-English Explanation):")
+        st.subheader("Why the model made this forecast:")
 
         if chosen_model_name == "Decision Tree":
             # Extract tree decision path and simplify into clear physical limits
@@ -430,7 +422,7 @@ elif selected_screen == "3. Single Prediction & Advisory":
             node_indicator = tree.decision_path(X_val)
             node_index = node_indicator.indices[node_indicator.indptr[0]:node_indicator.indptr[1]]
 
-            st.write("**Decision Rules Followed (Human-Understandable Steps):**")
+            st.write("**Decision Rules Followed:**")
             for node_id in node_index:
                 if tree_obj.feature[node_id] >= 0:
                     feat_idx = tree_obj.feature[node_id]
@@ -721,19 +713,15 @@ elif selected_screen == "5. Settings & Cost Matrix":
     c4.metric("Total cost", f"{total_cost}")
 
 # =============================================================
-# SCREEN 6: 30-Day Forecast Accuracy (Assigned Domain Screen)
+# SCREEN 6: 30-Day Forecast Accuracy
 # =============================================================
 elif selected_screen == "6. 30-Day Forecast Accuracy":
-    st.header("Screen 6: 30-Day Forecast-Accuracy Track Record")
-    st.write(
-        "**Assigned Technical Requirement:** *'A forecast-accuracy screen — what the product predicted "
-        "against what actually happened over the last thirty days, because a forecast nobody can check is a forecast nobody should trust.'*"
-    )
+    st.header("Screen 6: 30-Day Forecast Accuracy")
 
     active_model_name = st.session_state.get("selected_model_name", DEFAULT_MODEL)
     model = models[active_model_name]
     th = st.session_state.get("poor_threshold", DEFAULT_WARNING_LEVEL)
-    st.info(f"**Displaying Track Record for Active Model:** {active_model_name}")
+    st.info(f"**Active Model:** {active_model_name}")
 
     # Extract the last 30 daily readings from the test set (12:00 PM daily readings)
     test_daily = test_df[test_df.index.hour == 12].tail(30).copy()
@@ -741,10 +729,9 @@ elif selected_screen == "6. 30-Day Forecast Accuracy":
     end_date = test_daily.index[-1].strftime("%B %d, %Y")
 
     st.write(
-        f"**How this works:** This screen simulates the last 30 operational days of the deployment "
-        f"({start_date} to {end_date} from the historical study). For every single day at 12:00 PM, "
-        "the model made a 24-hour ahead forecast based purely on that day's sensor readings. "
-        "Below is the honest day-by-day comparison of what the product predicted against what the official reference station recorded 24 hours later."
+        f"This screen shows the last 30 days ({start_date} to {end_date}). "
+        "For each day at 12:00 PM, the model made a 24-hour forecast using that day's sensor readings. "
+        "Here is the day-by-day comparison between what was predicted and what actually happened."
     )
 
     # Apply Screen 5 threshold to predictions
@@ -786,9 +773,3 @@ elif selected_screen == "6. 30-Day Forecast Accuracy":
     display_table = test_daily[["Actual", "Predicted", "Status", "NO2(GT)", "CO(GT)"]].copy()
     display_table.columns = ["Actual Reality", "Model Forecast", "Result Status", "NO2 (µg/m³)", "CO (mg/m³)"]
     st.dataframe(display_table, use_container_width=True)
-
-    st.info(
-        f"**Honest Track Record Statement:** Over the last 30 operational days ({start_date} to {end_date}), {active_model_name} achieved an honest accuracy of "
-        f"**{accuracy_30d}%** against official reference analyzers compared to the baseline of **{baseline_30d_pct}%** (always guessing {majority_30d}). "
-        "By allowing users to inspect past forecasts against reality, users can verify model reliability before making critical health or operational decisions."
-    )
